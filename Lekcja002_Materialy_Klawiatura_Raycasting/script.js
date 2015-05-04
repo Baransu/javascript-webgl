@@ -39,8 +39,8 @@ function init(){
     // kolor tła 0x zamiast #
 	renderer.setClearColor(0x000000);
 
-	WIDTH = window.innerWidth;
-	HEIGHT = window.innerHeight;
+	WIDTH = 800//window.innerWidth;
+	HEIGHT = 400//window.innerHeight;
 
 	renderer.setSize(WIDTH, HEIGHT);
 
@@ -185,8 +185,8 @@ function onMouseDown(event){
 	var raycaster = new THREE.Raycaster();
 	var mouseVector = new THREE.Vector2();
 
-    mouseVector.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouseVector.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    mouseVector.x = (event.clientX / WIDTH) * 2 - 1;
+    mouseVector.y = -(event.clientY / HEIGHT) * 2 + 1;
     
     raycaster.setFromCamera(mouseVector, camera);
     
