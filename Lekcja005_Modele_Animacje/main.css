@@ -1,0 +1,16 @@
+* {
+	margin:0;
+	padding: 0;	
+}
+
+html, body {
+	 margin: 0;
+	 overflow: hidden;
+}
+#select {
+	position: fixed;
+	left: 0;
+	top: 0;
+	margin: 1% 0 0 1%;
+	border: 1px solid black;
+}
