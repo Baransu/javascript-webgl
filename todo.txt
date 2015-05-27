@@ -1,0 +1,44 @@
+
+1. Bry³y - 3 pkt
+
+DONE - wybór bry³y (co najmniej 8 róznych)
+DONE - zmiana suwakami (input range) fov, scale, rotation
+- zmiana t³a aplikacji cz/b
+
+2. Zapa³ki 3D - 4 pkt
+
+DONE - 9 wyœrodkowanych na scenie prostopad³oœcianów z 3-ma ró¿nymi teksturami na œcianach
+DONE - ruch kamery góra / dó³ klawiatur¹ (strza³ki góra / dó³)
+DONE - ruch kamery dooko³a œrodka sceny  (strza³ki lewo / prawo)
+DONE - skokowy ruch danego pude³ka (o jego wielkoœæ) po jego zaznaczeniu mysz¹ (klawiatura 6 klawiszy)
+
+3. Planety - 6 pkt 
+
+DONE - uk³ad s³oneczny - gwiazdy, s³oñce i wszystkie planety
+DONE - zró¿nicowany ruch planet po orbitach i obrót wokó³ w³asnej osi
+DONE - widoczne elipsy / okrêgi orbit planet
+DONE - ruch kamery klawiszami: obrót lewo, obrót prawo , góra, dó³, przybli¿enie, oddalenie od s³oñca
+- focus kamery na planetê po klikniêciu menu
+- focus kamery na planetê i ruch kamery góra / dó³ 
+
+5. Model cz1 - 4 pkt
+
+DONE - ruch kamery klawiszami obrót lewo, obrót prawo , góra, dó³,przybli¿enie, oddalenie
+DONE - wybór jednej z wielu animacji obiektu, za pomoc¹ klikniêcia w menu
+DONE - dodawanie klonów (inny materia³ klona)
+DONE - usuwanie kolonów
+
+6. Model cz2 - 7 pkt
+
+- dodanie / usuniêcie (ciemno / jasno) g³ównego œwiat³a sceny - klawisz L
+- pojawienie / znikniecie wszystkich elementów UI (menu , panele, etc) - klawisz M
+- kompas (canvas) wskazuj¹cy kierunki œwiata, zmieniane wraz z obrotem kamery
+- dodanie / usuniêcie minimum trzech œwiate³ i ich widocznych bry³ (wireframe)
+- edycja ustawieñ œwiate³  za pomoc¹ W£ASNYCH suwaków (r,g,b,x,y,moc) - 2pkt // ¿adnych gotowych bibliotek dla suwaków, ani range!
+- w³asny slider zmieniajacy pozycjê œwiat³a wokó³ œrodka sceny (kó³eczko w kompasie)
+
+7. Model cz3 - 3 pkt
+
+DONE - jedna / dwie kamery - klawisz F
+DONE - sterowanie ruchem postaci  (first person - ruch do przodu, skrêt w lewo, prawo, animacja - bieg) na jednym z ekranów - klawisze WAD
+DONE - kolizja z klonami (zmiana materia³u i zachowania klona po kolizji)

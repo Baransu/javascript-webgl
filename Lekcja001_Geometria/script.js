@@ -77,7 +77,7 @@ function init(){
 	camera.position.y = 50;
 	camera.position.z = 200;
 
-	camera.lookAt(obj.mesh.position);
+	//camera.lookAt(obj.mesh.position);
 
 	loop();
 
@@ -110,11 +110,16 @@ function change(){
 
 	rot = parseFloat(document.getElementById("rot").value);
 }
-function selected(value){
-
+function selected(value)
+{
 	scene.remove(obj.mesh);
 	obj.geometry = geometry[value];
 	obj.mesh = new THREE.Mesh(obj.geometry, obj.material); 
 	scene.add(obj.mesh)
+}
 
+function button(e)
+{
+	camera.rotation.y += Math.PI/180;
+	//console..
 }

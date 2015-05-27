@@ -1,7 +1,8 @@
 var lastTime = Date.now();;
 
 var scene;
-var camera;
+var camera1;
+var camera2;
 var renderer;
 
 var WIDTH, HEIGHT;
@@ -18,15 +19,40 @@ var origin = new THREE.Vector3(0,0,0);
 
 var meshModel;
 var animations = [];	
-var animationDeltaSum = 0;
 var cloneWave = 1;
 var clones = [];
+
+var lights = [];
+
+var timer = 0;
+
+var functionColor = true;
+
+var ground;
+
+var doubleCam = true;
+
+var run = false;
+
+var speed = 100;
+
+var left = false, forward = false, right = false;
+
+var normalMat;
+var colMat;
 
 function init()
 {	
 	scene = new THREE.Scene();
 
-	camera = new THREE.PerspectiveCamera(
+	camera1 = new THREE.PerspectiveCamera(
+	    60, // kąt patrzenia kamery (FOV - field of view)
+	    16/9, // proporcje widoku
+	    0.1, // min renderowana odległość
+	    10000 // max renderowana odległość
+    );
+	
+	camera2 = new THREE.PerspectiveCamera(
 	    60, // kąt patrzenia kamery (FOV - field of view)
 	    16/9, // proporcje widoku
 	    0.1, // min renderowana odległość
@@ -34,10 +60,11 @@ function init()
     );
 
     renderer = new THREE.WebGLRenderer();
-
+	renderer.autoClear = false;
+	
     // kolor tła 0x zamiast #
-	renderer.setClearColor(0x7EC0EE);
-
+	renderer.setClearColor(0x000000);
+	
 	WIDTH = window.innerWidth;
 	HEIGHT = window.innerHeight;
 
@@ -45,10 +72,26 @@ function init()
 
 	document.getElementById("div").appendChild(renderer.domElement);
 	document.addEventListener("keydown", onKeyDown, false);
+	document.addEventListener("keyup", onKeyUp, false);
 
-	var geometry = new THREE.PlaneBufferGeometry(512, 512);
-	var mat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: THREE.ImageUtils.loadTexture("materials/mars.jpg") });
-	var ground = new THREE.Mesh(geometry, mat);
+	var geometry = new THREE.PlaneBufferGeometry(1024, 1024);
+	//var mat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: THREE.ImageUtils.loadTexture("materials/groundD.bmp") });
+	
+	var mat = new THREE.MeshPhongMaterial(
+	{
+		side: THREE.DoubleSide,
+		map: THREE.ImageUtils.loadTexture("materials/grassD.bmp"),
+		normalMap: THREE.ImageUtils.loadTexture("materials/grassN.bmp"),
+		specular: 0xffffff,
+		shininess: 2,
+		shading: THREE.SmoothShading,
+	});
+		
+	ground = new THREE.Mesh(geometry, mat);
+	ground.material.map.repeat.set(16, 16); //gęstość powtarzania
+	ground.material.map.wrapS = ground.material.map.wrapT = THREE.RepeatWrapping; // powtarzanie w obu kierunkach	
+	ground.material.normalMap.repeat.set(16, 16); //gęstość powtarzania
+	ground.material.normalMap.wrapS = ground.material.normalMap.wrapT = THREE.RepeatWrapping; // powtarzanie w obu kierunkach	
 	
 	//ground.material.map.repeat.set(8, 8);
 	//ground.material.map.wrapS = ground.material.map.wrapT = THREE.RepeatWrapping;
@@ -66,11 +109,17 @@ function init()
 //	     shading: THREE.SmoothShading,
 //	     vertexColors: THREE.FaceColors
 //	});
-	camera.position.x = camX;
-	camera.position.y = camY;
-	camera.position.z = camZ;
+	camera1.position.x = camX;
+	camera1.position.y = camY;
+	camera1.position.z = camZ;
 
-	camera.lookAt(origin);
+	camera1.lookAt(origin);
+	
+	camera2.position.x = 0;
+	camera2.position.y = 50;
+	camera2.position.z = -250;
+
+	camera2.lookAt(origin);
 
 	rotate(angle);
 	
@@ -82,18 +131,32 @@ function init()
 		
 		//mat.morphNormals = true;
 		
-		var mat = new THREE.MeshBasicMaterial(
+		normalMat = new THREE.MeshPhongMaterial(
 		{
 			map: THREE.ImageUtils.loadTexture ("materials/carmac.png"),
+			normalMap: THREE.ImageUtils.loadTexture ("materials/carmacN.png"),
 			morphTargets: true,
 			morphNormals: true,
 			specular: 0xffffff,
-			shininess: 60,
+			shininess: 1,
+			shading: THREE.SmoothShading,
+			vertexColors: THREE.FaceColors		
+		});
+		
+		colMat = new THREE.MeshPhongMaterial(
+		{
+			wireframe: true,
+			map: THREE.ImageUtils.loadTexture ("materials/carmac.png"),
+			normalMap: THREE.ImageUtils.loadTexture ("materials/carmacN.png"),
+			morphTargets: true,
+			morphNormals: true,
+			specular: 0xffffff,
+			shininess: 1,
 			shading: THREE.SmoothShading,
 			vertexColors: THREE.FaceColors		
 		});
 
-		meshModel = new THREE.MorphAnimMesh(geometry, mat);
+		meshModel = new THREE.MorphAnimMesh(geometry, normalMat);
 		meshModel.name = "name";
 		meshModel.rotation.y = Math.PI; // ustaw obrót modelu
 		meshModel.position.y = 25; // ustaw pozycje modelu
@@ -101,7 +164,6 @@ function init()
 		meshModel.parseAnimations();
 		
 		var element = document.getElementById("select");
-		console.log(element);
 		var id = 0;
 		for (var key in meshModel.geometry.animations)
 		{	
@@ -117,16 +179,27 @@ function init()
 			
 			temp.innerHTML = key;
 			element.appendChild(temp);
-			console.log(key);
 			id++;
 		}
 		
-		meshModel.playAnimation(animations[0], 5);
+		
+		lights[0] = new THREE.PointLight(0x00ff00, 1);		
+		lights[0].position.set(700, 250, 700);
+		
+		lights[1] = new THREE.PointLight(0x0000ff, 1);
+		lights[1].position.set(-700, 250, -700);
+		
+		for(var i = 0; i < lights.length; i++)
+			scene.add(lights[i]);
+			
+		meshModel.material.needsUpdate = true;
+		ground.material.needsUpdate = true;
+		
+		meshModel.playAnimation(animations[1], 5);
 
 		scene.add(meshModel);
 		loop();
 	});
-
 }
 
 function loop()
@@ -139,87 +212,204 @@ function loop()
     lastTime = now;
 
     window.requestAnimationFrame(loop);
-    renderer.render(scene, camera);
+	
+	if(doubleCam)
+	{
+		//dobranie proporcji widoku
+		camera1.aspect = (WIDTH/2)/HEIGHT; // aspect powinien wynikać z proporcji polowy ekranu
+		camera2.aspect = (WIDTH/2)/HEIGHT; // aspect powinien wynikać z proporcji polowy ekranu
+		camera1.updateProjectionMatrix();
+		camera2.updateProjectionMatrix();
+		// dla kamery 1
+		renderer.setViewport(WIDTH/2,0,WIDTH/2,HEIGHT);
+		renderer.render(scene, camera1);
+		//dla kamery 2
+		renderer.setViewport(0,0,WIDTH/2,HEIGHT);	
+		renderer.render(scene, camera2);
+	}
+	else
+	{
+		camera1.aspect = WIDTH/HEIGHT;
+		camera1.updateProjectionMatrix();
+		renderer.setViewport(0,0,WIDTH,HEIGHT);
+		renderer.render(scene, camera1);
+	}
 }
 
 function update(deltaTime)
 {
-	camera.position.x = camX;
-	camera.position.z = camZ;
-	camera.position.y = camY;
-
-	camera.lookAt(origin);
-	animationDeltaSum += deltaTime;
+	if(forward)
+	{
+		meshModel.translateX(-speed * deltaTime);
+	}
 	
-	meshModel.updateAnimation(animationDeltaSum);
+	//a
+	if(left)
+	{
+		meshModel.rotation.y += Math.PI * deltaTime;
+	}
+	
+	//d
+	if(right)
+	{
+		meshModel.rotation.y -= Math.PI * deltaTime;
+	}
+	
+	if(!left && !right && !forward)
+	{
+		run = false;
+		meshModel.playAnimation(animations[0], 5);
+	}
+	
+	
+	var camFPP = new THREE.Vector3(100, 45, 0);	
+	var camPos = camFPP.applyMatrix4(meshModel.matrixWorld);
+	            
+	camera2.position.x = camPos.x;
+	camera2.position.y = camPos.y;
+	camera2.position.z = camPos.z;
+	
+	camera2.lookAt(meshModel.position);
+	
+	
+	camera1.position.x = camX;
+	camera1.position.z = camZ;
+	camera1.position.y = camY;
+
+	camera1.lookAt(origin);
+	
+	timer += deltaTime;
+	
+	if(timer > .1)
+	{
+		timer = 0;
+		//changeColors();
+	}
+	
+	//if(run)
+	meshModel.updateAnimation(deltaTime * 1000);
+		//meshModel.playAnimation(animations[1], 5);
+	//else
+		//meshModel.playAnimation(animations[0], 5);
+	
 	
 	for(var i = 0; i < clones.length; i++)
 	{
-		clones[i].updateAnimation(animationDeltaSum);
+		if (clones[i].position.distanceTo(meshModel.position) < 20)
+		{		              
+			clones[i].material = colMat;
+			clones[i].playAnimation(animations[0], 5);
+			clones[i].playAnim = false;
+		}
+		else
+		{
+			clones[i].material = normalMat;
+			clones[i].playAnim = true;
+		}
+		
+		if(clones[i].playAnim)
+			clones[i].updateAnimation(deltaTime * 1000);
 	}
+	
+	
+}
+
+function onKeyUp(event)
+{
+	var e = event.which;
+	
+	//w
+	if(e == 87) forward = false;
+	
+	//a
+	if(e == 65) left = false;
+	
+	//d
+	if(e == 68) right = false;
+		
 }
 
 function onKeyDown(event)
 {	
-	//console.log(event.which);
-	if(event.which == 67)
+	if(event.which == 70) doubleCam = !doubleCam;
+	
+	//console.log(event.which)
+	//up 38
+	//down 40
+	//left 37
+	//right 39
+	// + 187
+	// - 189
+	
+	//w 87
+	//a 65
+	//s 83
+	//d 68
+	//q 69
+	//e 81
+	var e = event.which;
+	if( !run && (e == 87 || e == 65 || e == 68))
 	{
-		clone();
+		run = true;
+		meshModel.playAnimation(animations[1], 5);
 	}
-	//87 up
-	if(event.which == 87)
+
+	//w
+	if(e == 87) forward = true;
+	
+	//a
+	if(e == 65) left = true;
+	
+	//d
+	if(e == 68) right = true;
+	
+	
+	//c clone
+	if(event.which == 67) clone();
+	//x delete
+	if(event.which == 88) deleteClone();
+		
+	//up
+	if(event.which == 38)
 		camY++;
 
-	//83 down
-	if(event.which == 83)
+	//down
+	if(event.which == 40)
 		camY--;
 
-	//87 up
-	if(event.which == 87)
-		camY++;
-
-	//83 down
-	if(event.which == 83)
-		camY--;
-
-	//65 left
-	if(event.which == 65)
+	//left cam
+	if(event.which == 37)
 	{
-		angle += Math.PI/180;
+		angle += Math.PI/90;
 		rotate(angle);
 	}
-
-	//68 right 
-	if(event.which == 68)
+	
+	//close
+	if(event.which == 189)
 	{
-		angle -= Math.PI/180;
-		rotate(angle);		
-	}
-
-	//obrot o 360 stopni
-	if(angle > Math.PI * 2)
-		angle = 0
-	if(angle < 0)
-		angle = Math.PI * 2;
-
-	//console.log(event.which);
-
-	//81 close
-	if(event.which == 81)
-	{
-		radius--;
+		radius -= 5;
 		if(radius < 1)
 			radius = 1;	
 		rotate(angle);	
 	}
-	//69 far
-	if(event.which == 69)
+	
+	//far
+	if(event.which == 187)
 	{
-		radius++;
-		if(radius > 400)
-			radius = 400;
+		radius += 5;
 		rotate(angle);		
 	}
+
+	//right cam
+	if(event.which == 39)
+	{
+		angle -= Math.PI/90;
+		rotate(angle);		
+	}
+
+	//obrot o 360 stopni
+	if(angle > Math.PI * 2)	angle = 0;
+	if(angle < 0) angle = Math.PI * 2;
 
 }
 
@@ -238,7 +428,18 @@ function change(e)
 	{
 		clones[i].playAnimation(animations[e.target.abc], 5);
 	}
-	console.log(e.target.abc)
+}
+
+function deleteClone()
+{
+	cloneWave = 0;
+	for(var i = 0; i < clones.length; i++)
+	{
+		var c = clones[i];
+		scene.remove(c);		
+	}
+	
+	clones = [];
 }
 
 function clone()
@@ -246,20 +447,40 @@ function clone()
 	for(var i = 1; i <= 4 * cloneWave; i++)
 	{
 		var c = meshModel.clone();
-		c.position.x = Math.cos((Math.PI * 2) / (i)) * (cloneWave * 50);
-		c.position.z = Math.sin((Math.PI * 2) / (i)) * (cloneWave * 50);
+		var angle = (Math.PI*2) / (cloneWave * 4);
+		c.position.x = Math.cos(angle * i) * (cloneWave * 50);
+		c.position.z = Math.sin(angle * i) * (cloneWave * 50);
 		clones.push(c);
 		scene.add(c);
 		c.playAnimation(animations[0], 5);
 	}
+	
 	cloneWave++;
-
-//kontener.remove(obiekt_klona_zapisany_w_tablicy_klonow);	
 }
 
-function whichChild(elem){
+function whichChild(e){
     var  i= 0;
-    while((elem = elem.previousSibling) != null) ++i;
+    while((e = e.previousSibling) != null) ++i;
     return i;
+}
+
+function changeColors()
+{
+	
+	if(functionColor)
+	{
+		lights[0].color.setHex(0xff0000);
+		lights[1].color.setHex(0x0000ff);
+	}
+	else
+	{
+		lights[0].color.setHex(0x0000ff);
+		lights[1].color.setHex(0xff0000);
+	}
+	
+	functionColor = !functionColor;
+	
+	meshModel.material.needsUpdate = true;
+	ground.material.needsUpdate = true;
 }
 
