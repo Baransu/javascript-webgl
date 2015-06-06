@@ -16,33 +16,38 @@ var angle = Math.PI/2;
 
 var solarObjects = [];
 
-var origin = new THREE.Vector3(0,0,0);
+var origin;
 var edit = false;
 
 var intersects;
 
 var rotationInterval;
 
+var rotationMod = new THREE.Object3D();
+var cameraHandler = new THREE.Object3D();
+
+var currentPlanet = 0;
+
 var solarData = [
 	//sun
-	{radius: 10.93, materialLink: "sun.jpg", position: new THREE.Vector3(0,0,0), orbitaRot: 0, selfRot: 0.001},
+	{radius: 10.93, materialLink: "sun.jpg", position: new THREE.Vector3(0,0,0), orbitaRot: 0, selfRot: 0.001, name: "sun"},
 	
 	//markury
-	{radius: 0.383, materialLink: "mercury.jpg", position: new THREE.Vector3(50,0,0), orbitaRot: 0.00101, selfRot: 0.01},
+	{radius: 0.383, materialLink: "mercury.jpg", position: new THREE.Vector3(50,0,0), orbitaRot: 0.00101, selfRot: 0.01, name: "mercury"},
 	//venus
-	{radius: 0.950, materialLink: "venus.jpg", position: new THREE.Vector3(60,0,0), orbitaRot: 0.001, selfRot: 0.01},
+	{radius: 0.950, materialLink: "venus.jpg", position: new THREE.Vector3(60,0,0), orbitaRot: 0.001, selfRot: 0.01, name: "venus"},
 	//earth
-	{radius: 1, materialLink: "earth.jpg", position: new THREE.Vector3(75,0,0), orbitaRot: 0.00045, selfRot: 0.01},
+	{radius: 1, materialLink: "earth.jpg", position: new THREE.Vector3(75,0,0), orbitaRot: 0.00045, selfRot: 0.01, name: "earth"},
 	//mars
-	{radius: 0.532, materialLink: "mars.jpg", position: new THREE.Vector3(120,0,0), orbitaRot: 0.0031, selfRot: 0.01},
+	{radius: 0.532, materialLink: "mars.jpg", position: new THREE.Vector3(120,0,0), orbitaRot: 0.0031, selfRot: 0.01, name: "mars"},
 	//jowisz
-	{radius: 10.97, materialLink: "jupiter.jpg", position: new THREE.Vector3(155,0,0), orbitaRot: 0.00501, selfRot: 0.01},
+	{radius: 10.97, materialLink: "jupiter.jpg", position: new THREE.Vector3(155,0,0), orbitaRot: 0.00501, selfRot: 0.01, name: "jupiter"},
 	//saturn
-	{radius: 9.14, materialLink: "saturn.jpg", position: new THREE.Vector3(200,0,0), orbitaRot: 0.003301, selfRot: 0.01},
+	{radius: 9.14, materialLink: "saturn.jpg", position: new THREE.Vector3(200,0,0), orbitaRot: 0.003301, selfRot: 0.01, name: "saturn"},
 	//uran
-	{radius: 3.98, materialLink: "uranus.png", position: new THREE.Vector3(255,0,0), orbitaRot: 0.003201, selfRot: 0.01},
+	{radius: 3.98, materialLink: "uranus.png", position: new THREE.Vector3(255,0,0), orbitaRot: 0.003201, selfRot: 0.01, name: "uranus"},
 	//neptun
-	{radius: 3.86, materialLink: "neptun.jpg", position: new THREE.Vector3(300,0,0), orbitaRot: 0.00201, selfRot: 0.01},
+	{radius: 3.86, materialLink: "neptun.jpg", position: new THREE.Vector3(300,0,0), orbitaRot: 0.00201, selfRot: 0.01, name: "neptun"},
 ]
 
 var orbity = [];
@@ -51,9 +56,12 @@ function init(){
 	
 	scene = new THREE.Scene();
 
+	WIDTH = window.innerWidth;
+	HEIGHT = window.innerHeight;
+	
 	camera = new THREE.PerspectiveCamera(
 	    60, // kąt patrzenia kamery (FOV - field of view)
-	    16/9, // proporcje widoku
+	    WIDTH/HEIGHT, // proporcje widoku
 	    0.1, // min renderowana odległość
 	    10000 // max renderowana odległość
     );
@@ -62,9 +70,6 @@ function init(){
 
     // kolor tła 0x zamiast #
 	renderer.setClearColor(0x000000);
-
-	WIDTH = window.innerWidth;
-	HEIGHT = window.innerHeight;
 
 	renderer.setSize(WIDTH, HEIGHT);
 
@@ -76,17 +81,16 @@ function init(){
 	
 
 	var skybox = new THREE.Mesh(geometry, mat)
-	scene.add(skybox);
 
 	var light = new THREE.PointLight( 0xffffff, 1, 0 );
 	light.position.set( 0, 0, 0 );
-	scene.add( light );
-
+	
 	for(var a = 0; a < solarData.length; a++){
 		if(a == 0)
 			var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide,map: THREE.ImageUtils.loadTexture("materials/"+ solarData[a].materialLink +"") });
 		else
 			var material = new THREE.MeshLambertMaterial({ side: THREE.DoubleSide,map: THREE.ImageUtils.loadTexture("materials/"+ solarData[a].materialLink +"") });
+			
 		var geometry = new THREE.SphereGeometry(solarData[a].radius, 32, 32)
 		var mesh = new THREE.Mesh(geometry, material)
 		mesh.position.set(solarData[a].position.x, solarData[a].position.y, solarData[a].position.z);
@@ -99,7 +103,7 @@ function init(){
 
 	for(var a = 0; a < orbity.length; a++){
 		orbity[a].add(solarObjects[a]);
-		scene.add(orbity[a])
+		scene.add(orbity[a]);
 	}
 
 	for(var a = 0; a < orbity.length; a++){
@@ -115,19 +119,32 @@ function init(){
 		var line = new THREE.Line(geometry, lineMaterial);
 		scene.add(line);
 	}
-
-	
-	//axis = new THREE.AxisHelper(50);    
-	//scene.add(axis);
-
+	scene.add(skybox);
+	scene.add( light );
 	camera.position.x = camX;
 	camera.position.y = camY;
 	camera.position.z = camZ;
 
-	camera.lookAt(origin);
-
-	rotate(angle)
-
+	//camera.lookAt(origin);
+	
+	var element = document.getElementById("select");
+	for(var i in solarData)
+	{
+		var temp = document.createElement("div");
+		temp.className = "solar";
+		temp.abc = i;
+		temp.onmousedown = function(e)
+		{
+			change(e);
+		};
+		
+		temp.innerHTML = solarData[i].name;
+		element.appendChild(temp);
+	}
+	
+	// /cameraHandler.add(camera);
+	
+	//console.log(scene.children[5].position.x)
 	loop();
 
 }
@@ -146,18 +163,21 @@ function loop() {
 };
 
 function update(deltaTime){
+	
+	origin = new THREE.Vector3().setFromMatrixPosition(solarObjects[currentPlanet].matrixWorld)
+	
 	camera.position.x = camX;
+	camera.position.y =	camY;
 	camera.position.z = camZ;
-	camera.position.y = camY;
-
 	camera.lookAt(origin);
+
 
 	for(var a = 0; a < orbity.length; a++){
 		orbity[a].rotation.y += solarData[a].orbitaRot;
 		solarObjects[a].rotation.y += solarData[a].selfRot;
 	}
-
-
+	
+	rotate(angle);
 };
 
 function onKeyDown(event){	
@@ -180,18 +200,16 @@ function onKeyDown(event){
 	//65 left
 	if(event.which == 65){
 		angle += Math.PI/180;
-		rotate(angle);
 	}
 
 	//68 right 
 	if(event.which == 68){
-		angle -= Math.PI/180;
-		rotate(angle);		
+		angle -= Math.PI/180;	
 	}
 
 	//obrot o 360 stopni
 	if(angle > Math.PI * 2)
-		angle = 0
+		angle = 0;
 	if(angle < 0)
 		angle = Math.PI * 2;
 
@@ -201,26 +219,30 @@ function onKeyDown(event){
 	if(event.which == 81){
 		radius--;
 		if(radius < 1)
-			radius = 1	
-		rotate(angle);	
+			radius = 1;		
 	}
 	//69 far
 	if(event.which == 69){
 		radius++;
 		if(radius > 400)
-			radius = 400;
-		rotate(angle);		
+			radius = 400;		
 	}
-
 };
 
 //funkcja obracajaca kamere wokol srodka
-function rotate(angle){    
-    camX = origin.x + Math.cos(angle) * radius;
+function rotate(angle)
+{    
+	camX = origin.x + Math.cos(angle) * radius;
 	camZ = origin.z + Math.sin(angle) * radius;
 };
+
 function rotateForOrbita(angle1, radius1){    
-    var x = origin.x + Math.cos(angle1) * radius1;
-	var z = origin.z + Math.sin(angle1) * radius1;
+    var x = Math.cos(angle1) * radius1;
+	var z = Math.sin(angle1) * radius1;
 	return new THREE.Vector3(x, 0, z);
 };
+
+function change(e)
+{	
+	currentPlanet = e.target.abc;
+}

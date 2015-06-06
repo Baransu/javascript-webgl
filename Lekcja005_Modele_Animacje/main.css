@@ -15,3 +15,17 @@ html, body {
 	border: 1px solid black;
 	color: white;
 }
+#ui {
+	position: absolute;
+	width: 20%;
+	height: 100%;
+	right: 0;
+	top: 0;
+	background-color: rgba(0, 0, 0, 0.5)
+}
+canvas {
+	background-color: #fff;
+	margin: auto;
+	width: 90%;
+	display: block;
+}

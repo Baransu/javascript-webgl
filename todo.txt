@@ -3,7 +3,7 @@
 
 DONE - wybór bry³y (co najmniej 8 róznych)
 DONE - zmiana suwakami (input range) fov, scale, rotation
-- zmiana t³a aplikacji cz/b
+DONE - zmiana t³a aplikacji cz/b
 
 2. Zapa³ki 3D - 4 pkt
 
@@ -18,8 +18,8 @@ DONE - uk³ad s³oneczny - gwiazdy, s³oñce i wszystkie planety
 DONE - zró¿nicowany ruch planet po orbitach i obrót wokó³ w³asnej osi
 DONE - widoczne elipsy / okrêgi orbit planet
 DONE - ruch kamery klawiszami: obrót lewo, obrót prawo , góra, dó³, przybli¿enie, oddalenie od s³oñca
-- focus kamery na planetê po klikniêciu menu
-- focus kamery na planetê i ruch kamery góra / dó³ 
+DONE - focus kamery na planetê po klikniêciu menu
+DONE - focus kamery na planetê i ruch kamery góra / dó³ 
 
 5. Model cz1 - 4 pkt
 
@@ -30,8 +30,8 @@ DONE - usuwanie kolonów
 
 6. Model cz2 - 7 pkt
 
-- dodanie / usuniêcie (ciemno / jasno) g³ównego œwiat³a sceny - klawisz L
-- pojawienie / znikniecie wszystkich elementów UI (menu , panele, etc) - klawisz M
+DONE - dodanie / usuniêcie (ciemno / jasno) g³ównego œwiat³a sceny - klawisz L
+DONE - pojawienie / znikniecie wszystkich elementów UI (menu , panele, etc) - klawisz M
 - kompas (canvas) wskazuj¹cy kierunki œwiata, zmieniane wraz z obrotem kamery
 - dodanie / usuniêcie minimum trzech œwiate³ i ich widocznych bry³ (wireframe)
 - edycja ustawieñ œwiate³  za pomoc¹ W£ASNYCH suwaków (r,g,b,x,y,moc) - 2pkt // ¿adnych gotowych bibliotek dla suwaków, ani range!

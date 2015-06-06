@@ -44,10 +44,13 @@ function init(){
 	
 	
 	scene = new THREE.Scene();
+	
+	WIDTH = 800//window.innerWidth;
+	HEIGHT = 600//window.innerHeight;
 
 	camera = new THREE.PerspectiveCamera(
 	    45, // kąt patrzenia kamery (FOV - field of view)
-	    4/3, // proporcje widoku
+	    WIDTH/HEIGHT, // proporcje widoku
 	    0.1, // min renderowana odległość
 	    10000 // max renderowana odległość
     );
@@ -55,10 +58,7 @@ function init(){
     renderer = new THREE.WebGLRenderer();
 
     // kolor tła 0x zamiast #
-	renderer.setClearColor(0x000000);
-
-	WIDTH = 800//window.innerWidth;
-	HEIGHT = 600//window.innerHeight;
+	renderer.setClearColor(0xffffff);
 
 	renderer.setSize(WIDTH, HEIGHT);
 
@@ -77,7 +77,7 @@ function init(){
 	camera.position.y = 50;
 	camera.position.z = 200;
 
-	//camera.lookAt(obj.mesh.position);
+	camera.lookAt(obj.mesh.position);
 
 	loop();
 
@@ -109,6 +109,9 @@ function change(){
 	scale = parseFloat(document.getElementById("scale").value);
 
 	rot = parseFloat(document.getElementById("rot").value);
+	
+	
+	
 }
 function selected(value)
 {
@@ -116,6 +119,14 @@ function selected(value)
 	obj.geometry = geometry[value];
 	obj.mesh = new THREE.Mesh(obj.geometry, obj.material); 
 	scene.add(obj.mesh)
+}
+
+function selected2(value)
+{
+	if(value == "black")
+		renderer.setClearColor(0x000000);
+	else if(value = "white")
+		renderer.setClearColor(0xffffff);
 }
 
 function button(e)

@@ -1,4 +1,6 @@
-var lastTime = Date.now();;
+/* global THREE */
+var lastTime = Date.now();
+var start = Date.now();
 
 var scene;
 var camera1;
@@ -32,8 +34,6 @@ var ground;
 
 var doubleCam = true;
 
-var run = false;
-
 var speed = 100;
 
 var left = false, forward = false, right = false;
@@ -41,10 +41,31 @@ var left = false, forward = false, right = false;
 var normalMat;
 var colMat;
 
+var expMaterial;
+var customMesh;
+
+var globalLight = true;
+
+var showUI = true;
+
+var ctx, canvas, CANVASH, CANVASW;
+
 function init()
 {	
 	scene = new THREE.Scene();
 
+	expMaterial =  new THREE.ShaderMaterial( {
+
+		uniforms: { 
+			tExplosion: { type: "t", value: THREE.ImageUtils.loadTexture('materials/gradient.png') },
+			time: { type: "f", value: 0.0 },
+			weight: { type: "f", value: 10.0 }
+		},
+		vertexShader: document.getElementById( 'vertexShader' ).textContent,
+		fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+		
+	} );	
+   
 	camera1 = new THREE.PerspectiveCamera(
 	    60, // kąt patrzenia kamery (FOV - field of view)
 	    16/9, // proporcje widoku
@@ -80,8 +101,8 @@ function init()
 	var mat = new THREE.MeshPhongMaterial(
 	{
 		side: THREE.DoubleSide,
-		map: THREE.ImageUtils.loadTexture("materials/grassD.bmp"),
-		normalMap: THREE.ImageUtils.loadTexture("materials/grassN.bmp"),
+		map: THREE.ImageUtils.loadTexture("materials/groundD.bmp"),
+		normalMap: THREE.ImageUtils.loadTexture("materials/groundN.bmp"),
 		specular: 0xffffff,
 		shininess: 2,
 		shading: THREE.SmoothShading,
@@ -123,6 +144,12 @@ function init()
 
 	rotate(angle);
 	
+	// create a wireframe material		
+	var wireframeMat = new THREE.MeshBasicMaterial( { 
+        color: 0xb7ff00, 
+        wireframe: true 
+    } );
+	
 	var loader = new THREE.JSONLoader();
 	
 	loader.load('tris.js', function (geometry, mat)
@@ -134,7 +161,6 @@ function init()
 		normalMat = new THREE.MeshPhongMaterial(
 		{
 			map: THREE.ImageUtils.loadTexture ("materials/carmac.png"),
-			normalMap: THREE.ImageUtils.loadTexture ("materials/carmacN.png"),
 			morphTargets: true,
 			morphNormals: true,
 			specular: 0xffffff,
@@ -183,10 +209,10 @@ function init()
 		}
 		
 		
-		lights[0] = new THREE.PointLight(0x00ff00, 1);		
+		lights[0] = new THREE.PointLight(0xffffff, 1);		
 		lights[0].position.set(700, 250, 700);
 		
-		lights[1] = new THREE.PointLight(0x0000ff, 1);
+		lights[1] = new THREE.PointLight(0xffffff, 1);
 		lights[1].position.set(-700, 250, -700);
 		
 		for(var i = 0; i < lights.length; i++)
@@ -195,9 +221,10 @@ function init()
 		meshModel.material.needsUpdate = true;
 		ground.material.needsUpdate = true;
 		
-		meshModel.playAnimation(animations[1], 5);
+		meshModel.playAnimation(animations[0], 5);
 
 		scene.add(meshModel);
+
 		loop();
 	});
 }
@@ -216,8 +243,8 @@ function loop()
 	if(doubleCam)
 	{
 		//dobranie proporcji widoku
-		camera1.aspect = (WIDTH/2)/HEIGHT; // aspect powinien wynikać z proporcji polowy ekranu
-		camera2.aspect = (WIDTH/2)/HEIGHT; // aspect powinien wynikać z proporcji polowy ekranu
+		camera1.aspect = (WIDTH/2)/HEIGHT;
+		camera2.aspect = (WIDTH/2)/HEIGHT;
 		camera1.updateProjectionMatrix();
 		camera2.updateProjectionMatrix();
 		// dla kamery 1
@@ -238,6 +265,11 @@ function loop()
 
 function update(deltaTime)
 {
+	expMaterial.uniforms[ 'time' ].value = .0001 * ( Date.now() - start );
+//	customMesh.scale.x += deltaTime;
+//	customMesh.scale.y += deltaTime;
+//	customMesh.scale.z += deltaTime;
+	
 	if(forward)
 	{
 		meshModel.translateX(-speed * deltaTime);
@@ -254,14 +286,7 @@ function update(deltaTime)
 	{
 		meshModel.rotation.y -= Math.PI * deltaTime;
 	}
-	
-	if(!left && !right && !forward)
-	{
-		run = false;
-		meshModel.playAnimation(animations[0], 5);
-	}
-	
-	
+		
 	var camFPP = new THREE.Vector3(100, 45, 0);	
 	var camPos = camFPP.applyMatrix4(meshModel.matrixWorld);
 	            
@@ -271,33 +296,26 @@ function update(deltaTime)
 	
 	camera2.lookAt(meshModel.position);
 	
-	
 	camera1.position.x = camX;
 	camera1.position.z = camZ;
 	camera1.position.y = camY;
 
 	camera1.lookAt(origin);
 	
-	timer += deltaTime;
+//	if(forward)
+//		
+//	else
+//		meshModel.playAnimation(animations[1], 5);
 	
-	if(timer > .1)
-	{
-		timer = 0;
-		//changeColors();
-	}
-	
-	//if(run)
 	meshModel.updateAnimation(deltaTime * 1000);
-		//meshModel.playAnimation(animations[1], 5);
-	//else
-		//meshModel.playAnimation(animations[0], 5);
 	
+	//for(var i in clones) clones[i].updateAnimation(deltaTime * 1000);
 	
 	for(var i = 0; i < clones.length; i++)
 	{
 		if (clones[i].position.distanceTo(meshModel.position) < 20)
 		{		              
-			clones[i].material = colMat;
+			clones[i].material = expMaterial;
 			clones[i].playAnimation(animations[0], 5);
 			clones[i].playAnim = false;
 		}
@@ -310,8 +328,7 @@ function update(deltaTime)
 		if(clones[i].playAnim)
 			clones[i].updateAnimation(deltaTime * 1000);
 	}
-	
-	
+		
 }
 
 function onKeyUp(event)
@@ -319,14 +336,17 @@ function onKeyUp(event)
 	var e = event.which;
 	
 	//w
-	if(e == 87) forward = false;
-	
+	if(e == 87)
+	{
+		forward = false;
+		meshModel.playAnimation(animations[0], 5);
+	}	
+	//run = false;
 	//a
 	if(e == 65) left = false;
 	
 	//d
 	if(e == 68) right = false;
-		
 }
 
 function onKeyDown(event)
@@ -348,14 +368,28 @@ function onKeyDown(event)
 	//q 69
 	//e 81
 	var e = event.which;
-	if( !run && (e == 87 || e == 65 || e == 68))
+	
+	console.log(e);
+	
+	//l pressed 
+	if(e == 76)
 	{
-		run = true;
+		globalLight = !globalLight;
+		light();
+	}
+	
+	if(e == 77)
+	{
+		showUI = !showUI;
+		ui();
+	}
+	
+	//w
+	if(e == 87)
+	{
+		forward = true;
 		meshModel.playAnimation(animations[1], 5);
 	}
-
-	//w
-	if(e == 87) forward = true;
 	
 	//a
 	if(e == 65) left = true;
@@ -388,8 +422,7 @@ function onKeyDown(event)
 	if(event.which == 189)
 	{
 		radius -= 5;
-		if(radius < 1)
-			radius = 1;	
+		if(radius < 1) radius = 1;	
 		rotate(angle);	
 	}
 	
@@ -408,8 +441,8 @@ function onKeyDown(event)
 	}
 
 	//obrot o 360 stopni
-	if(angle > Math.PI * 2)	angle = 0;
-	if(angle < 0) angle = Math.PI * 2;
+	//if(angle > Math.PI * 2)	angle = 0;
+	//if(angle < 0) angle = Math.PI * 2;
 
 }
 
@@ -465,8 +498,7 @@ function whichChild(e){
 }
 
 function changeColors()
-{
-	
+{	
 	if(functionColor)
 	{
 		lights[0].color.setHex(0xff0000);
@@ -483,4 +515,50 @@ function changeColors()
 	meshModel.material.needsUpdate = true;
 	ground.material.needsUpdate = true;
 }
+
+function light()
+{
+	
+	if(globalLight)
+	{
+		for(var i in lights)
+		{
+			lights[i].color.setHex(0xffffff);			
+		}
+	}
+	else
+	{
+		for(var i in lights)
+		{
+			lights[i].color.setHex(0x000000);			
+		}
+	}	
+	
+	meshModel.material.needsUpdate = true;
+	ground.material.needsUpdate = true;
+	
+	for(var i in clones)
+	{
+		clones[i].material.needsUpdate = true;
+	}
+	
+}
+
+function ui()
+{
+	var sel = document.getElementById("select");
+	var ui = document.getElementById("ui");
+	
+	if(showUI)
+	{
+		ui.style.visibility = "visible";
+		sel.style.visibility = "visible";
+	}
+	else
+	{
+		ui.style.visibility = "hidden";
+		sel.style.visibility = "hidden";
+	}
+}
+
 
