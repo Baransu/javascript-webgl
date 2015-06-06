@@ -48,10 +48,103 @@ var globalLight = true;
 
 var showUI = true;
 
+var minorLights = [];
+var minorLightsMeshes = [];
+
 var ctx, canvas, CANVASH, CANVASW;
+
+var lightSlider = {
+	angle: 0,
+	x: 0,
+	y: 0,
+	r: 10,	
+}
+
+var mouse = {
+	x: 0,
+	y: 0,
+	rightPressed: false,
+	leftPressed: false,	
+}
+
+var uiDiv;
+
+var lightSliderPressed = false;
+
+var crosshair = new Image();
+crosshair.src = "materials/crosshair.png";
+
+var lightRadius = 50;
 
 function init()
 {	
+	uiDiv = document.getElementById("ui");
+	//canvas
+	canvas = document.getElementById("canvas");
+	ctx = canvas.getContext("2d");
+	
+	canvas.height = canvas.width;
+	
+	CANVASW = canvas.width;
+	CANVASH = canvas.width;		
+	
+	document.addEventListener('mousemove', function(e)
+	{		
+		mouse.x = e.clientX - uiDiv.offsetLeft; 
+		mouse.y = e.clientY - uiDiv.offsetTop;
+
+	}, false);
+
+	document.addEventListener('mousedown', function(e)
+	{
+		switch (e.which)
+		{
+	        case 1:
+	       		mouse.leftPressed = true;
+	            break;
+	        case 3:
+	            mouse.rightPressed = true;
+	            break;
+	        default:
+	            break;
+    	}
+	}, false);
+	
+	document.addEventListener('mouseup', function(e)
+	{
+		switch (e.which)
+		{
+	        case 1:
+				mouse.leftPressed = false;
+				lightSliderPressed = false;	
+	            break;
+	        case 3:
+	            mouse.rightPressed = false;
+	            break;
+	        default:
+	            break;
+    	}
+	}, false);
+	
+	canvas.addEventListener('click', function() { 
+		
+		if(mouse.x >= lightSlider.x - lightSlider.r && mouse.x <= lightSlider.x + lightSlider.r &&
+		   mouse.y >= lightSlider.y - lightSlider.r && mouse.y <= lightSlider.y + lightSlider.r)
+		{
+			lightSliderPressed = true;
+			console.log("pressed");
+		}
+		
+	}, false);
+	
+	//console.log(canvas.style);
+	
+	//slidery	
+	//document.getElementById('light' + this.name).addEventListener('mousedown', function (event) { lightControllers[indexo].clicked = true; }, false);
+	//document.getElementById('light' + this.name).addEventListener('mouseup', function (event) { lightControllers[indexo].clicked = false; }, false);
+	//document.getElementById('light' + this.name).addEventListener('mousemove', function (event) { lightControllers[indexo].move(event); }, false);	
+		
+	//three js	
 	scene = new THREE.Scene();
 
 	expMaterial =  new THREE.ShaderMaterial( {
@@ -130,6 +223,7 @@ function init()
 //	     shading: THREE.SmoothShading,
 //	     vertexColors: THREE.FaceColors
 //	});
+
 	camera1.position.x = camX;
 	camera1.position.y = camY;
 	camera1.position.z = camZ;
@@ -143,13 +237,7 @@ function init()
 	camera2.lookAt(origin);
 
 	rotate(angle);
-	
-	// create a wireframe material		
-	var wireframeMat = new THREE.MeshBasicMaterial( { 
-        color: 0xb7ff00, 
-        wireframe: true 
-    } );
-	
+
 	var loader = new THREE.JSONLoader();
 	
 	loader.load('tris.js', function (geometry, mat)
@@ -265,6 +353,9 @@ function loop()
 
 function update(deltaTime)
 {
+	
+	console.log(CANVASW/2, CANVASH/2);
+	console.log(mouse.x, mouse.y);
 	expMaterial.uniforms[ 'time' ].value = .0001 * ( Date.now() - start );
 //	customMesh.scale.x += deltaTime;
 //	customMesh.scale.y += deltaTime;
@@ -302,14 +393,7 @@ function update(deltaTime)
 
 	camera1.lookAt(origin);
 	
-//	if(forward)
-//		
-//	else
-//		meshModel.playAnimation(animations[1], 5);
-	
 	meshModel.updateAnimation(deltaTime * 1000);
-	
-	//for(var i in clones) clones[i].updateAnimation(deltaTime * 1000);
 	
 	for(var i = 0; i < clones.length; i++)
 	{
@@ -328,7 +412,22 @@ function update(deltaTime)
 		if(clones[i].playAnim)
 			clones[i].updateAnimation(deltaTime * 1000);
 	}
-		
+	
+	if(lightSliderPressed)
+	{
+		lightSlider.angle = makeAngle(CANVASW/2, mouse.x, CANVASH/2, mouse.y);
+	}
+	
+	updateMaterials();
+	updateLightPos();
+	
+	drawCompas();
+			
+}
+
+function makeAngle(x1,x2,y1,y2)
+{
+	return Math.atan2(y2 - y1,x2 - x1);	
 }
 
 function onKeyUp(event)
@@ -369,7 +468,7 @@ function onKeyDown(event)
 	//e 81
 	var e = event.which;
 	
-	console.log(e);
+	//console.log(e);
 	
 	//l pressed 
 	if(e == 76)
@@ -440,10 +539,6 @@ function onKeyDown(event)
 		rotate(angle);		
 	}
 
-	//obrot o 360 stopni
-	//if(angle > Math.PI * 2)	angle = 0;
-	//if(angle < 0) angle = Math.PI * 2;
-
 }
 
 //funkcja obracajaca kamere wokol srodka
@@ -497,25 +592,6 @@ function whichChild(e){
     return i;
 }
 
-function changeColors()
-{	
-	if(functionColor)
-	{
-		lights[0].color.setHex(0xff0000);
-		lights[1].color.setHex(0x0000ff);
-	}
-	else
-	{
-		lights[0].color.setHex(0x0000ff);
-		lights[1].color.setHex(0xff0000);
-	}
-	
-	functionColor = !functionColor;
-	
-	meshModel.material.needsUpdate = true;
-	ground.material.needsUpdate = true;
-}
-
 function light()
 {
 	
@@ -532,16 +608,7 @@ function light()
 		{
 			lights[i].color.setHex(0x000000);			
 		}
-	}	
-	
-	meshModel.material.needsUpdate = true;
-	ground.material.needsUpdate = true;
-	
-	for(var i in clones)
-	{
-		clones[i].material.needsUpdate = true;
-	}
-	
+	}		
 }
 
 function ui()
@@ -561,4 +628,143 @@ function ui()
 	}
 }
 
+function drawCompas()
+{	
+	ctx.clearRect(0,0,CANVASW, CANVASH);
+	
+	//outer circle
+	ctx.save();
+	ctx.beginPath();
+	ctx.arc(CANVASW/2, CANVASH/2, CANVASW/3, 0, 2 * Math.PI, false);
+	ctx.strokeStyle = "white";
+ 	ctx.lineWidth = 1;
+	ctx.stroke();
+	ctx.restore();
+	
+	//inner circle
+	ctx.save();
+	ctx.beginPath();
+	ctx.arc(CANVASW/2, CANVASH/2, CANVASW/6, 0, 2 * Math.PI, false);
+	ctx.strokeStyle = "white";
+ 	ctx.lineWidth = 1;
+	ctx.stroke();
+	ctx.restore();
+	
+	//light slider
+	ctx.save();
+	ctx.beginPath();
+	lightSlider.x = CANVASW/2 + Math.cos(lightSlider.angle) * CANVASW/6;
+	lightSlider.y = CANVASH/2 + Math.sin(lightSlider.angle) * CANVASW/6;
+	ctx.arc(lightSlider.x, lightSlider.y, lightSlider.r, 0, 2 * Math.PI, false);
+	ctx.fillStyle = "yellow";
+	ctx.fill();
+	ctx.restore();
+	
+	//angles
+	ctx.save();
+	ctx.fillStyle = "white";
+	ctx.font = "20px Arial";
+	ctx.textAlign = "center";
+	for(var i = 0; i < 8; i++)
+	{
+		var x = CANVASW/2 + Math.cos(Math.PI/4 * i) * CANVASW/4;
+		var y = CANVASH/2 + Math.sin(Math.PI/4 * i) * CANVASW/4;
+		ctx.fillText(45 * i, x, y + 10);
+	}
+	
+	ctx.restore();	
+	
+	//directions
+	ctx.save();
+	ctx.translate(CANVASW/2,CANVASH/2);
+	ctx.rotate(angle - Math.PI/2);
+	ctx.fillStyle = "white";
+	ctx.font = "30px Arial";
+	ctx.textAlign = "center";
+	ctx.fillText("N", 0, -CANVASH/2 + CANVASH/20 + 15);	
+	ctx.fillText("S", 0, CANVASH/2 - CANVASH/20);		
+	ctx.fillText("E", CANVASW/2 - CANVASW/20, 0);	
+	ctx.fillText("W", -CANVASW/2 + CANVASW/20, 0);	
+	ctx.restore();	
+	
+	
+	//cursor
+	ctx.save();
+	ctx.drawImage(crosshair, mouse.x - 16, mouse.y - 16);
+	ctx.restore();
+}
 
+function updateLightPos()
+{
+	if(minorLights.length > 0)
+	{
+		minorLights[minorLights.length - 1].position.x = Math.cos(lightSlider.angle) * lightRadius;
+		minorLights[minorLights.length - 1].position.z = Math.sin(lightSlider.angle) * lightRadius;
+	}
+	
+	if(minorLightsMeshes.length > 0)
+	{
+		minorLightsMeshes[minorLightsMeshes.length - 1].position.x = Math.cos(lightSlider.angle) * lightRadius;
+		minorLightsMeshes[minorLightsMeshes.length - 1].position.z = Math.sin(lightSlider.angle) * lightRadius;
+	}
+}
+
+function updateMaterials()
+{
+	meshModel.material.needsUpdate = true;
+	ground.material.needsUpdate = true;
+	
+	for(var i in clones)
+	{
+		clones[i].material.needsUpdate = true;
+	}
+}
+
+function addLight()
+{
+	var wireframeMat = new THREE.MeshBasicMaterial( { 
+        color: 0x00ff00, 
+        wireframe: true 
+    } );
+	
+	var geometry = new THREE.SphereGeometry( 5, 5, 5 );
+	var mesh = new THREE.Mesh(geometry, wireframeMat);
+	mesh.position.set(lightRadius,50,0);
+	
+	var light = new THREE.PointLight(0x00ff00, 1);
+	light.position.set(lightRadius, 50, 0);
+	
+	lightSlider.angle = 0;
+	
+	minorLightsMeshes.push(mesh);
+	minorLights.push(light);
+	scene.add(mesh);
+	scene.add(light);	
+	
+}
+
+// var lightControllers = [];
+// 
+// function LightController(name, max, indexo) {
+// 	this.name = name;
+// 	document.getElementById('light' + this.name).addEventListener('mousedown', function (event) { lightControllers[indexo].clicked = true; }, false);
+// 	document.getElementById('light' + this.name).addEventListener('mouseup', function (event) { lightControllers[indexo].clicked = false; }, false);
+// 	document.getElementById('light' + this.name).addEventListener('mousemove', function (event) { lightControllers[indexo].move(event); }, false);
+// 	this.maxValue = max;
+// 	this.clicked = false;
+// 	this.value = (parseInt(document.getElementById('light' + this.name + 'Thumb').style.left) - 236) / 236 * this.maxValue + this.maxValue;
+// 	this.move = function(e) {
+// 		if(this.clicked) {
+// 			var valu = e.clientX - document.getElementById('light' + this.name).getBoundingClientRect().left - 8;
+// 			if(valu < 0) valu = 0;
+// 			if(valu > 236) valu = 236;
+// 			document.getElementById('light' + this.name + 'Thumb').style.left = valu;
+// 			this.value = (parseInt(document.getElementById('light' + this.name + 'Thumb').style.left) - 236) / 236 * this.maxValue + this.maxValue;
+// 		}
+// 	};
+// }
+// 
+// var names = ['R', 'G', 'B', 'X', 'Y', 'Z', 'P'];
+// for(x in names) {
+// 	lightControllers[x] = new LightController(names[x], 1, x);
+// }

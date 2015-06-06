@@ -21,11 +21,38 @@ html, body {
 	height: 100%;
 	right: 0;
 	top: 0;
+	margin: 0;
+	padding: 0;
 	background-color: rgba(0, 0, 0, 0.5)
 }
-canvas {
-	background-color: #fff;
+#canvas {
+	width: 100%;	
+	cursor: none;
+}
+/*slidery*/
+.sliderContainer {
+    padding-bottom: 22px;
+}
+.slider {
+    width: 100%;
+    height: 4px;
+    background-color: white;
+    position: relative;
+    margin-top: 18px;
+	cursor: pointer;
+}
+.thumb {
+    width: 16px;
+    height: 16px;
+    background-color: white;
+    position: absolute;
+    bottom: -6px;
+}
+.light {
+	color:white;
+	width: 50%;
 	margin: auto;
-	width: 90%;
-	display: block;
+	text-align: center;
+	background-color: rgba(0, 0, 0, 0.7);
+	cursor: pointer;
 }
