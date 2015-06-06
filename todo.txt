@@ -33,7 +33,7 @@ DONE - usuwanie kolonów
 DONE - dodanie / usuniêcie (ciemno / jasno) g³ównego œwiat³a sceny - klawisz L
 DONE - pojawienie / znikniecie wszystkich elementów UI (menu , panele, etc) - klawisz M
 DONE - kompas (canvas) wskazuj¹cy kierunki œwiata, zmieniane wraz z obrotem kamery
-- dodanie / usuniêcie minimum trzech œwiate³ i ich widocznych bry³ (wireframe)
+DONE - dodanie / usuniêcie minimum trzech œwiate³ i ich widocznych bry³ (wireframe)
 - edycja ustawieñ œwiate³  za pomoc¹ W£ASNYCH suwaków (r,g,b,x,y,moc) - 2pkt // ¿adnych gotowych bibliotek dla suwaków, ani range!
 DONE - w³asny slider zmieniajacy pozycjê œwiat³a wokó³ œrodka sceny (kó³eczko w kompasie)
 

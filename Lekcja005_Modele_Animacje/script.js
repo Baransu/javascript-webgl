@@ -76,8 +76,26 @@ crosshair.src = "materials/crosshair.png";
 
 var lightRadius = 50;
 
+
+var lightControllers = [];
+
+var names = ['R', 'G', 'B', 'X', 'Y', 'P'];
+
+var lightData = [];
+
+var lightTmp = {
+	r: 0,
+	y: 0,
+}
+
 function init()
 {	
+	
+	for(var x in names) {
+		lightControllers[x] = new LightController(names[x], 1, x);
+	}
+	
+	
 	uiDiv = document.getElementById("ui");
 	//canvas
 	canvas = document.getElementById("canvas");
@@ -140,9 +158,17 @@ function init()
 	//console.log(canvas.style);
 	
 	//slidery	
-	//document.getElementById('light' + this.name).addEventListener('mousedown', function (event) { lightControllers[indexo].clicked = true; }, false);
-	//document.getElementById('light' + this.name).addEventListener('mouseup', function (event) { lightControllers[indexo].clicked = false; }, false);
-	//document.getElementById('light' + this.name).addEventListener('mousemove', function (event) { lightControllers[indexo].move(event); }, false);	
+	document.getElementById("lightGThumb").addEventListener('mousedown', function (event) { 
+		
+		 }, false);
+	document.getElementById("lightGThumb").addEventListener('mouseup', function (event) { 
+		
+	}, false);
+	document.getElementById("lightGThumb").addEventListener('mousemove', function (event) {
+		
+		 this.style.left = mouse.x;
+		 
+	 }, false);	
 		
 	//three js	
 	scene = new THREE.Scene();
@@ -259,9 +285,7 @@ function init()
 		
 		colMat = new THREE.MeshPhongMaterial(
 		{
-			wireframe: true,
-			map: THREE.ImageUtils.loadTexture ("materials/carmac.png"),
-			normalMap: THREE.ImageUtils.loadTexture ("materials/carmacN.png"),
+			map: THREE.ImageUtils.loadTexture ("materials/carmacN.png"),
 			morphTargets: true,
 			morphNormals: true,
 			specular: 0xffffff,
@@ -353,13 +377,7 @@ function loop()
 
 function update(deltaTime)
 {
-	
-	console.log(CANVASW/2, CANVASH/2);
-	console.log(mouse.x, mouse.y);
 	expMaterial.uniforms[ 'time' ].value = .0001 * ( Date.now() - start );
-//	customMesh.scale.x += deltaTime;
-//	customMesh.scale.y += deltaTime;
-//	customMesh.scale.z += deltaTime;
 	
 	if(forward)
 	{
@@ -405,7 +423,7 @@ function update(deltaTime)
 		}
 		else
 		{
-			clones[i].material = normalMat;
+			clones[i].material = colMat;
 			clones[i].playAnim = true;
 		}
 		
@@ -417,6 +435,8 @@ function update(deltaTime)
 	{
 		lightSlider.angle = makeAngle(CANVASW/2, mouse.x, CANVASH/2, mouse.y);
 	}
+	
+	checkSliders();
 	
 	updateMaterials();
 	updateLightPos();
@@ -452,20 +472,6 @@ function onKeyDown(event)
 {	
 	if(event.which == 70) doubleCam = !doubleCam;
 	
-	//console.log(event.which)
-	//up 38
-	//down 40
-	//left 37
-	//right 39
-	// + 187
-	// - 189
-	
-	//w 87
-	//a 65
-	//s 83
-	//d 68
-	//q 69
-	//e 81
 	var e = event.which;
 	
 	//console.log(e);
@@ -568,6 +574,30 @@ function deleteClone()
 	}
 	
 	clones = [];
+}
+
+function deleteLight()
+{
+	if(minorLights.length > 0)
+	{	
+		var id = minorLights.length - 1;
+		scene.remove(minorLights[id])
+		minorLights.splice(id, 1);
+	}
+	
+	if(minorLightsMeshes.length > 0)
+	{
+		var id = minorLightsMeshes.length - 1;
+		scene.remove(minorLightsMeshes[id])
+		minorLightsMeshes.splice(id, 1);
+	}
+	
+	for(var i in lightControllers)
+	{
+		lightControllers[i].reset();
+	}
+	
+	
 }
 
 function clone()
@@ -698,14 +728,16 @@ function updateLightPos()
 {
 	if(minorLights.length > 0)
 	{
-		minorLights[minorLights.length - 1].position.x = Math.cos(lightSlider.angle) * lightRadius;
-		minorLights[minorLights.length - 1].position.z = Math.sin(lightSlider.angle) * lightRadius;
+		minorLights[minorLights.length - 1].position.x = Math.cos(lightSlider.angle) * lightData[minorLights.length - 1].r;
+		minorLights[minorLights.length - 1].position.z = Math.sin(lightSlider.angle) * lightData[minorLights.length - 1].r;
+		minorLights[minorLights.length - 1].position.y = lightData[minorLights.length - 1].y;
 	}
 	
 	if(minorLightsMeshes.length > 0)
 	{
-		minorLightsMeshes[minorLightsMeshes.length - 1].position.x = Math.cos(lightSlider.angle) * lightRadius;
-		minorLightsMeshes[minorLightsMeshes.length - 1].position.z = Math.sin(lightSlider.angle) * lightRadius;
+		minorLightsMeshes[minorLightsMeshes.length - 1].position.x = Math.cos(lightSlider.angle) * lightData[minorLightsMeshes.length - 1].r;
+		minorLightsMeshes[minorLightsMeshes.length - 1].position.z = Math.sin(lightSlider.angle) * lightData[minorLightsMeshes.length - 1].r;
+		minorLightsMeshes[minorLightsMeshes.length - 1].position.y = lightData[minorLightsMeshes.length - 1].y;
 	}
 }
 
@@ -733,8 +765,11 @@ function addLight()
 	
 	var light = new THREE.PointLight(0x00ff00, 1);
 	light.position.set(lightRadius, 50, 0);
+	light.intensity = 0;
 	
-	lightSlider.angle = 0;
+	lightSlider.angle = 0;	
+	
+	lightData.push(lightTmp);
 	
 	minorLightsMeshes.push(mesh);
 	minorLights.push(light);
@@ -743,28 +778,66 @@ function addLight()
 	
 }
 
-// var lightControllers = [];
-// 
-// function LightController(name, max, indexo) {
-// 	this.name = name;
-// 	document.getElementById('light' + this.name).addEventListener('mousedown', function (event) { lightControllers[indexo].clicked = true; }, false);
-// 	document.getElementById('light' + this.name).addEventListener('mouseup', function (event) { lightControllers[indexo].clicked = false; }, false);
-// 	document.getElementById('light' + this.name).addEventListener('mousemove', function (event) { lightControllers[indexo].move(event); }, false);
-// 	this.maxValue = max;
-// 	this.clicked = false;
-// 	this.value = (parseInt(document.getElementById('light' + this.name + 'Thumb').style.left) - 236) / 236 * this.maxValue + this.maxValue;
-// 	this.move = function(e) {
-// 		if(this.clicked) {
-// 			var valu = e.clientX - document.getElementById('light' + this.name).getBoundingClientRect().left - 8;
-// 			if(valu < 0) valu = 0;
-// 			if(valu > 236) valu = 236;
-// 			document.getElementById('light' + this.name + 'Thumb').style.left = valu;
-// 			this.value = (parseInt(document.getElementById('light' + this.name + 'Thumb').style.left) - 236) / 236 * this.maxValue + this.maxValue;
-// 		}
-// 	};
-// }
-// 
-// var names = ['R', 'G', 'B', 'X', 'Y', 'Z', 'P'];
-// for(x in names) {
-// 	lightControllers[x] = new LightController(names[x], 1, x);
-// }
+function checkSliders()
+{
+	if(minorLights.length > 0)
+	{
+		//r
+		if(lightControllers[0].clicked)
+		{
+			minorLights[minorLights.length - 1].color.r = lightControllers[0].value;
+		}
+		
+		//g
+		else if(lightControllers[1].clicked)
+		{
+			minorLights[minorLights.length - 1].color.g = lightControllers[1].value;
+		}
+		//b
+		else if(lightControllers[2].clicked)
+		{
+			minorLights[minorLights.length - 1].color.b = lightControllers[2].value;
+		}
+		//x
+		else if(lightControllers[3].clicked)
+		{
+			lightData[minorLights.length - 1].r = lightControllers[3].value * 1000;
+		}
+		//y
+		else if(lightControllers[4].clicked)
+		{
+			lightData[minorLights.length - 1].y = lightControllers[4].value * 100;
+		}
+		//p
+		else if(lightControllers[5].clicked)
+		{
+			minorLights[minorLights.length - 1].intensity = lightControllers[5].value;
+		}		
+	}
+
+}
+
+function LightController(name, max, indexo) {
+	this.name = name;
+	document.getElementById('light' + this.name).addEventListener('mousedown', function (event) { lightControllers[indexo].clicked = true; }, false);
+	document.getElementById('light' + this.name).addEventListener('mouseup', function (event) { lightControllers[indexo].clicked = false; }, false);
+	document.getElementById('light' + this.name).addEventListener('mousemove', function (event) { lightControllers[indexo].move(event); }, false);
+	this.maxValue = max;
+	this.clicked = false;
+	this.value = (parseInt(document.getElementById('light' + this.name + 'Thumb').style.left) - 236) / 236 * this.maxValue + this.maxValue;
+	this.reset  = function()
+	{
+		document.getElementById('light' + this.name.toString() + 'Thumb').style.left = 0 + "px";
+		this.value = (parseInt(document.getElementById('light' + this.name + 'Thumb').style.left) - 236) / 236 * this.maxValue + this.maxValue;	
+	}
+	
+	this.move = function(e) {
+		if(this.clicked) {
+			var valu = e.clientX - document.getElementById('light' + this.name).getBoundingClientRect().left - 8;
+			if(valu < 0) valu = 0;
+			if(valu > 236) valu = 236;
+			document.getElementById('light' + this.name.toString() + 'Thumb').style.left = valu + "px";
+			this.value = (parseInt(document.getElementById('light' + this.name + 'Thumb').style.left) - 236) / 236 * this.maxValue + this.maxValue;			
+		}
+	};
+}

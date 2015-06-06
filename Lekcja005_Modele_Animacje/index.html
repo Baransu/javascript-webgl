@@ -13,14 +13,52 @@
   <div id="ui">
     <canvas id="canvas"></canvas>
     
+    <div id="lightR" class="sliderContainer">
+			Czerowne swiatlo:
+			<div class="slider">
+				<div id="lightRThumb" class="thumb"></div>
+			</div>
+		</div>
+    
     <div id="lightG" class="sliderContainer">
-			Zielone światło:
+			Zielone swiatlo:
 			<div class="slider">
 				<div id="lightGThumb" class="thumb"></div>
 			</div>
 		</div>
     
-    <div id="addlight" class="light" onclick="addLight()">Dodaj swiatlo</div>
+    <div id="lightB" class="sliderContainer">
+			Niebieskie swiatlo:
+			<div class="slider">
+				<div id="lightBThumb" class="thumb"></div>
+			</div>
+		</div>
+    
+    <div id="lightX" class="sliderContainer">
+			X:
+			<div class="slider">
+				<div id="lightXThumb" class="thumb"></div>
+			</div>
+		</div>
+    
+    <div id="lightY" class="sliderContainer">
+			Y:
+			<div class="slider">
+				<div id="lightYThumb" class="thumb"></div>
+			</div>
+		</div>
+    
+     <div id="lightP" class="sliderContainer">
+			Power:
+			<div class="slider">
+				<div id="lightPThumb" class="thumb"></div>
+			</div>
+		</div>
+    
+    <div class="light" onclick="addLight()">Dodaj swiatlo</div>
+    <div class="light" onclick="deleteLight()">Usun swiatlo</div>
+    <div class="light" onclick="clone()">Dodaj klony</div>
+    <div class="light" onclick="deleteClone()">Usun klony</div>
   </div>
 		
 	<script type="x-shader/x-vertex" id="vertexShader">

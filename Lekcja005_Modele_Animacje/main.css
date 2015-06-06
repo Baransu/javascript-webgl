@@ -6,6 +6,12 @@
 html, body {
 	 margin: 0;
 	 overflow: hidden;
+ 	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 }
 #select {
 	position: fixed;
@@ -32,6 +38,7 @@ html, body {
 /*slidery*/
 .sliderContainer {
     padding-bottom: 22px;
+	color: white;
 }
 .slider {
     width: 100%;
@@ -48,6 +55,8 @@ html, body {
     position: absolute;
     bottom: -6px;
 }
+
+/*adding buttons*/
 .light {
 	color:white;
 	width: 50%;
